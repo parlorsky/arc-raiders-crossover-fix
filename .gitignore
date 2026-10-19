@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+*.zip
+*.log
+install.json
+engine/
+bottles/
+dist/
