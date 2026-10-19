@@ -14,7 +14,7 @@
    - **Later runs:** just launches the game and re-applies the local tweak.
 3. If Steam asks you to sign in, do it in the game window. The first launch can take several minutes.
 
-That is the whole flow — no Terminal commands and no manually typed paths. If you only want to install or update without launching, double-click **Install.command** instead.
+That is the whole flow — no Terminal commands and no manually typed paths.
 
 **If macOS blocks the downloaded script:** this community script is not notarized. Review the source before deciding to run it. Where macOS offers it, use the per-download **System Settings → Privacy & Security → Open Anyway** flow described by [Apple](https://support.apple.com/en-us/102445). Do not disable Gatekeeper or other global protections. If macOS reports malware or damaged software, stop and investigate.
 
@@ -41,7 +41,7 @@ The private installation is stored at `~/Library/Application Support/ARCRaidersC
 
 **If no Steam bottle is found, or you want to choose one explicitly:** in Terminal, type `python3` and a space, drag **install.py** into Terminal, append ` --bottle `, then drag your actual bottle folder into Terminal and press Return. For CrossOver in a custom location, append ` --crossover ` and drag **CrossOver.app** too. `--list-bottles` lists detected bottles; `--dry-run` validates inputs without copying or starting Wine. A Python script's absolute path works from any Terminal folder.
 
-**To update an existing private copy:** double-click **Install.command** from the newly downloaded folder. It refreshes the helper scripts and local tweak without touching the game or Steam data. If the binary recipe itself changed, it asks for a clean reinstall instead.
+**To update an existing private copy:** double-click **ARC Raiders.command** from the newly downloaded folder. It refreshes the helper scripts and the local tweak, then launches the game. If the binary recipe itself changed, it asks for a clean reinstall instead.
 
 ## Uninstall
 
