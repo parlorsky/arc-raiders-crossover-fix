@@ -367,12 +367,13 @@ def update_existing(destination: Path) -> Path:
     launcher = root / "launcher"
     if launcher.is_symlink() or not launcher.is_dir():
         raise ValueError("The existing installation has no launcher folder")
-    for filename in ("install.py", "launch.py", "uninstall.py", "anticheat.py"):
-        shutil.copy2(HERE / filename, launcher / filename)
-    # The refreshed launcher must accept the existing images.  If this recipe
-    # changed the binary patches, a full reinstall is required instead.
+    # Validate with the refreshed launcher BEFORE overwriting anything.  If the
+    # binary recipe changed, the old copy stays intact and the user is asked to
+    # reinstall instead of ending up with scripts that reject their install.
     import launch as launch_module
     launch_module.validate_installation(root)
+    for filename in ("install.py", "launch.py", "uninstall.py", "anticheat.py"):
+        shutil.copy2(HERE / filename, launcher / filename)
     from anticheat import describe, ensure_runtime_tweak
     tweak = ensure_runtime_tweak(root / "bottles/Steam")
     if tweak:
