@@ -30,7 +30,7 @@ fi
 printf '%s\n' 'ARC Raiders — CrossOver compatibility' \
     'First run installs a private copy; later runs just launch the game.'
 
-"$arc_python" "$here/install.py" --ensure || exit $?
+"$arc_python" "$here/app/install.py" --ensure || exit $?
 "$arc_python" "$destination/launcher/launch.py" --destination "$destination"
 arc_result=$?
 if [ "$arc_result" -ne 0 ] && [ -t 0 ]; then

@@ -22,6 +22,9 @@ import uuid
 PROJECT = "arc-raiders-crossover-compat"
 DEFAULT_DESTINATION = Path.home() / "Library/Application Support/ARCRaidersCrossOver"
 HERE = Path(__file__).resolve().parent
+# Works both from the repository (app/ next to patches/) and from a flat
+# installed launcher folder, where the recipes are not needed at runtime.
+PATCH_DIR = HERE / "patches" if (HERE / "patches").is_dir() else HERE.parent / "patches"
 NATIVE_REL = Path("lib/wine/x86_64-unix/ntdll.so")
 PE_REL = Path("lib/wine/x86_64-windows/ntdll.dll")
 SERVER_SHA256 = "f9c4ed146c7d6dfc94334255907d4e0658218585085ca2107a5181b4deb474fc"
@@ -183,8 +186,8 @@ def inspect_sources(args: argparse.Namespace) -> dict:
             raise ValueError("Destination must not contain the original app or bottle")
     if not (bottle / "cxbottle.conf").is_file():
         raise ValueError("Not a CrossOver bottle directory")
-    native = load_manifest(HERE / "patches/ntdll-native.json")
-    pe = load_manifest(HERE / "patches/ntdll-pe.json")
+    native = load_manifest(PATCH_DIR / "ntdll-native.json")
+    pe = load_manifest(PATCH_DIR / "ntdll-pe.json")
     # Validate both full input files and every patch before creating a directory.
     apply_manifest((engine / NATIVE_REL).read_bytes(), native)
     apply_manifest((engine / PE_REL).read_bytes(), pe)

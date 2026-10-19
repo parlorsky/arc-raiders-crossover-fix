@@ -8,6 +8,14 @@
 
 This is a compatibility project for running your own game on macOS. It does **not** read or modify game memory, does **not** change gameplay, and does **not** interact with other players. It only adjusts local copies of the compatibility runtime and the anti-cheat runtime inside the private installation, keeps a backup of every changed file, and can restore it at any time.
 
+## Repository layout
+
+```
+ARC Raiders.command   one-button entry point (install / update / launch)
+app/                  installer, launcher, uninstaller, compatibility module
+patches/              binary patch recipes
+```
+
 [Download ZIP](https://github.com/parlorsky/arc-raiders-crossover-fix/archive/refs/heads/main.zip)
 
 ## One-button install
@@ -43,7 +51,7 @@ The private installation is stored at `~/Library/Application Support/ARCRaidersC
 
 **If Python is missing:** the script explains the problem and stops. Install Python 3 using the official [macOS installer from Python.org](https://www.python.org/downloads/macos/), then open **ARC Raiders.command** again. Existing compatible Python installations are reused. This project does not automatically install Python, Xcode, Homebrew or another runtime.
 
-**If no Steam bottle is found, or you want to choose one explicitly:** in Terminal, type `python3` and a space, drag **install.py** into Terminal, append ` --bottle `, then drag your actual bottle folder into Terminal and press Return. For CrossOver in a custom location, append ` --crossover ` and drag **CrossOver.app** too. `--list-bottles` lists detected bottles; `--dry-run` validates inputs without copying or starting Wine. A Python script's absolute path works from any Terminal folder.
+**If no Steam bottle is found, or you want to choose one explicitly:** in Terminal, type `python3` and a space, drag **app/install.py** into Terminal, append ` --bottle `, then drag your actual bottle folder into Terminal and press Return. For CrossOver in a custom location, append ` --crossover ` and drag **CrossOver.app** too. `--list-bottles` lists detected bottles; `--dry-run` validates inputs without copying or starting Wine. A Python script's absolute path works from any Terminal folder.
 
 **To update an existing private copy:** double-click **ARC Raiders.command** from the newly downloaded folder. It refreshes the helper scripts and the local tweak, then launches the game. If the binary recipe itself changed, it asks for a clean reinstall instead.
 
