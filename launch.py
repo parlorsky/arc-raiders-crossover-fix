@@ -11,9 +11,9 @@ import time
 import uuid
 
 try:
-    from anticheat import describe, ensure_runtime_tweak
+    from compat import apply_compatibility_tweak, describe
 except ImportError:  # Older installations may not ship the module yet.
-    describe = ensure_runtime_tweak = None
+    apply_compatibility_tweak = describe = None
 
 DEFAULT_DESTINATION = Path.home() / "Library/Application Support/ARCRaidersCrossOver"
 PROJECT = "arc-raiders-crossover-compat"
@@ -103,16 +103,16 @@ def main(argv=None):
         root, engine, bottle, mode = validate_installation(args.destination)
         if mode == "baseline":
             print("Baseline demo: compatibility patches not applied")
-        elif ensure_runtime_tweak is not None:
+        elif apply_compatibility_tweak is not None:
             try:
-                tweak = ensure_runtime_tweak(bottle)
-                print("Anti-cheat compatibility tweak: " + describe(tweak))
+                tweak = apply_compatibility_tweak(bottle)
+                print("Compatibility adjustment: " + describe(tweak))
                 if not tweak:
                     print("Anti-cheat components are not installed yet; "
                           "if ARAV1011 appears on this first launch, quit the game "
                           "and launch it again.")
             except (OSError, ValueError) as exc:
-                print("Anti-cheat compatibility tweak skipped: " + str(exc), file=sys.stderr)
+                print("Compatibility adjustment skipped: " + str(exc), file=sys.stderr)
         wine = contained(engine, "bin/wine")
         env = launch_environment(root, engine, bottle)
         start_server(root, engine, bottle, env)

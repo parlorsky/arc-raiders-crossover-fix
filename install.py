@@ -300,12 +300,12 @@ def install_private(inputs: dict, *, baseline: bool = False) -> Path:
         configure_private_bottle(bottle)
         if not baseline:
             try:
-                from anticheat import describe, ensure_runtime_tweak
-                tweak = ensure_runtime_tweak(bottle)
+                from compat import apply_compatibility_tweak, describe
+                tweak = apply_compatibility_tweak(bottle)
                 if tweak:
-                    print("Anti-cheat compatibility tweak: " + describe(tweak))
+                    print("Compatibility adjustment: " + describe(tweak))
             except (ImportError, OSError, ValueError):
-                print("Anti-cheat compatibility tweak will be applied by the launcher.")
+                print("Compatibility adjustment will be applied by the launcher.")
         if not baseline:
             sign_private(native_path)
         server = ensure_owned_target(engine / "bin/wineserver", engine)
@@ -329,7 +329,7 @@ def install_private(inputs: dict, *, baseline: bool = False) -> Path:
         (staging / "install.json").write_text(json.dumps(marker, indent=2) + "\n", encoding="utf-8")
         launcher = staging / "launcher"
         launcher.mkdir()
-        for filename in ("install.py", "launch.py", "uninstall.py", "anticheat.py"):
+        for filename in ("install.py", "launch.py", "uninstall.py", "compat.py"):
             shutil.copy2(HERE / filename, launcher / filename)
         python = shlex.quote(str(Path(sys.executable).resolve()))
         for name, script in (
@@ -372,12 +372,13 @@ def update_existing(destination: Path) -> Path:
     # reinstall instead of ending up with scripts that reject their install.
     import launch as launch_module
     launch_module.validate_installation(root)
-    for filename in ("install.py", "launch.py", "uninstall.py", "anticheat.py"):
+    for filename in ("install.py", "launch.py", "uninstall.py", "compat.py"):
         shutil.copy2(HERE / filename, launcher / filename)
-    from anticheat import describe, ensure_runtime_tweak
-    tweak = ensure_runtime_tweak(root / "bottles/Steam")
+    (launcher / "anticheat.py").unlink(missing_ok=True)
+    from compat import apply_compatibility_tweak, describe
+    tweak = apply_compatibility_tweak(root / "bottles/Steam")
     if tweak:
-        print("Anti-cheat compatibility tweak: " + describe(tweak))
+        print("Compatibility adjustment: " + describe(tweak))
     return root
 
 
