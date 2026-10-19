@@ -4,6 +4,10 @@
 
 > **Use at your own risk.** This is an unofficial community experiment, not endorsed by Embark, Steam or CodeWeavers. It changes local copies of compatibility and anti-cheat components inside a private installation. That may conflict with the game's terms of service and could lead to account restrictions. No bans were observed in testing, but no guarantee is given. Use it only with your own licensed copies.
 
+## What this is — and what it is not
+
+This is a compatibility project for running your own game on macOS. It does **not** read or modify game memory, does **not** change gameplay, and does **not** interact with other players. It only adjusts local copies of the compatibility runtime and the anti-cheat runtime inside the private installation, keeps a backup of every changed file, and can restore it at any time.
+
 [Download ZIP](https://github.com/parlorsky/arc-raiders-crossover-fix/archive/refs/heads/main.zip)
 
 ## One-button install
