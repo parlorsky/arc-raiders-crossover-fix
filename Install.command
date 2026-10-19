@@ -26,7 +26,7 @@ if [ -z "$arc_python" ]; then
 else
     printf '%s\n' 'ARC Raiders CrossOver compatibility installer' \
         'Close Steam and Windows apps in the source CrossOver bottle before continuing.'
-    "$arc_python" "$arc_directory/install.py" --reveal "$@"
+    "$arc_python" "$arc_directory/install.py" --ensure --reveal "$@"
     arc_result=$?
 fi
 if [ -t 0 ]; then

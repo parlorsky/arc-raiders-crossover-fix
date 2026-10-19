@@ -299,6 +299,14 @@ def install_private(inputs: dict, *, baseline: bool = False) -> Path:
             atomic_bytes(system32 / "ntdll.dll", apply_manifest((system32 / "ntdll.dll").read_bytes(), inputs["pe"]))
         configure_private_bottle(bottle)
         if not baseline:
+            try:
+                from anticheat import describe, ensure_runtime_tweak
+                tweak = ensure_runtime_tweak(bottle)
+                if tweak:
+                    print("Anti-cheat compatibility tweak: " + describe(tweak))
+            except (ImportError, OSError, ValueError):
+                print("Anti-cheat compatibility tweak will be applied by the launcher.")
+        if not baseline:
             sign_private(native_path)
         server = ensure_owned_target(engine / "bin/wineserver", engine)
         check_hash(server, SERVER_SHA256, SERVER_SIZE)
@@ -321,7 +329,7 @@ def install_private(inputs: dict, *, baseline: bool = False) -> Path:
         (staging / "install.json").write_text(json.dumps(marker, indent=2) + "\n", encoding="utf-8")
         launcher = staging / "launcher"
         launcher.mkdir()
-        for filename in ("install.py", "launch.py", "uninstall.py"):
+        for filename in ("install.py", "launch.py", "uninstall.py", "anticheat.py"):
             shutil.copy2(HERE / filename, launcher / filename)
         python = shlex.quote(str(Path(sys.executable).resolve()))
         for name, script in (
@@ -346,6 +354,32 @@ def install_private(inputs: dict, *, baseline: bool = False) -> Path:
     return destination
 
 
+def update_existing(destination: Path) -> Path:
+    """Refresh helper scripts and the local tweak in an existing private copy."""
+    root = destination.expanduser().resolve(strict=True)
+    if not root.is_dir() or root.stat().st_uid != os.getuid():
+        raise ValueError("The installation directory is not owned by this user")
+    marker = json.loads((root / "install.json").read_text(encoding="utf-8"))
+    expected = dict(schema_version=1, project=PROJECT, engine="engine",
+                    bottle="bottles/Steam", bottle_name="Steam")
+    if not isinstance(marker, dict) or any(marker.get(k) != v for k, v in expected.items()):
+        raise ValueError("The existing folder is not an ARC Raiders compatibility installation")
+    launcher = root / "launcher"
+    if launcher.is_symlink() or not launcher.is_dir():
+        raise ValueError("The existing installation has no launcher folder")
+    for filename in ("install.py", "launch.py", "uninstall.py", "anticheat.py"):
+        shutil.copy2(HERE / filename, launcher / filename)
+    # The refreshed launcher must accept the existing images.  If this recipe
+    # changed the binary patches, a full reinstall is required instead.
+    import launch as launch_module
+    launch_module.validate_installation(root)
+    from anticheat import describe, ensure_runtime_tweak
+    tweak = ensure_runtime_tweak(root / "bottles/Steam")
+    if tweak:
+        print("Anti-cheat compatibility tweak: " + describe(tweak))
+    return root
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--crossover", type=Path, default=default_crossover())
@@ -354,6 +388,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--destination", type=Path, default=DEFAULT_DESTINATION)
     parser.add_argument("--dry-run", action="store_true", help="Only validate the original inputs; write nothing")
     parser.add_argument("--reveal", action="store_true", help="Show the installed launch shortcut in Finder after installation")
+    parser.add_argument("--ensure", action="store_true",
+                        help="Install fresh, or refresh an existing private copy")
     args = parser.parse_args(argv)
     try:
         if args.list_bottles:
@@ -362,6 +398,15 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"{path.name}: {path}")
             if not bottles:
                 print("No Steam bottles found in the normal CrossOver locations.")
+            return 0
+        if args.ensure and args.destination.expanduser().exists():
+            installed = update_existing(args.destination)
+            shortcut = installed / "Launch ARC Raiders.command"
+            print(f"Updated private copy: {installed}")
+            print(f"Double-click: {shortcut}")
+            if args.reveal:
+                subprocess.run(["/usr/bin/open", "-R", str(shortcut)], check=False,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return 0
         args.bottle = choose_bottle(args.bottle)
         print(f"Source bottle: {args.bottle}")
