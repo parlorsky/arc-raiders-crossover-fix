@@ -19,6 +19,13 @@ DEFAULT_DESTINATION = Path.home() / "Library/Application Support/ARCRaidersCross
 # User-editable overrides, kept at the repository root for easy editing.
 OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "bottle-env.conf"
 PROJECT = "arc-raiders-crossover-compat"
+# After a game update, the anti-cheat update service downloads a fresh runtime
+# copy in the middle of a running session — after the launch-time adjustment.
+# The watcher re-scans for such copies for a bounded window and adjusts them
+# within seconds, before the game sends its first match survey.
+WATCH_SECONDS = 1800
+WATCH_INTERVAL = 10
+WATCH_LOG_NAME = "compat-watch.log"
 PE_SHA256 = "97110d7731ca6f6aa5e6cc7bd9c538682877cc390cdfb489bf0057e4fd64f6ed"
 BASELINE_PE_SHA256 = "6dff64c00793ce92124f1316985c63783f539f26b392975c70f57637458d2387"
 STEAM_EXE = r"C:\Program Files (x86)\Steam\steam.exe"
@@ -123,12 +130,48 @@ def start_server(root, engine, bottle, env):
     raise TimeoutError("The owned wineserver did not become ready")
 
 
+def run_adjustment_watcher(root, bottle, duration=WATCH_SECONDS, interval=WATCH_INTERVAL):
+    """Re-apply the adjustment for a bounded window while the game is running.
+
+    Closes the race where the anti-cheat update service downloads a fresh
+    runtime copy after this launcher already adjusted the previous ones.
+    Returns a list of (level, message) events worth reporting.
+    """
+    events = []
+    deadline = time.monotonic() + duration
+    seen = {}
+    while time.monotonic() < deadline:
+        if apply_compatibility_tweak is None:
+            return events
+        try:
+            results = apply_compatibility_tweak(bottle)
+        except (OSError, ValueError) as exc:
+            events.append(("warn", f"watcher adjustment error: {exc}"))
+            return events
+        for path, status in results:
+            known = seen.get(path)
+            if status == "adjusted" or (known is not None and known != status):
+                events.append(("info", f"{path.name} in {path.parent.name}: {known} -> {status}"))
+            seen[path] = status
+        if "marker-not-found" in {status for _, status in results}:
+            events.append(("warn", "a new copy lacks the known marker; "
+                                   "the anti-cheat layout may have changed"))
+            return events
+        time.sleep(interval)
+    return events
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--destination", type=Path, default=DEFAULT_DESTINATION)
+    parser.add_argument("--watch", action="store_true",
+                        help="run the mid-session adjustment watcher and exit when done")
     args = parser.parse_args(argv)
     try:
         root, engine, bottle, mode = validate_installation(args.destination)
+        if args.watch:
+            run_adjustment_watcher(root, bottle)
+            return 0
         if mode == "baseline":
             print("Baseline demo: compatibility patches not applied")
         elif apply_compatibility_tweak is not None:
@@ -151,6 +194,15 @@ def main(argv=None):
                           steam_exe, "-applaunch", "1808500"], cwd=root, env=env,
                          stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL, start_new_session=True)
+        # Detached watcher: closes the update-during-session race so a fresh
+        # copy downloaded after the launch-time adjustment is still adjusted.
+        if apply_compatibility_tweak is not None and mode != "baseline":
+            watch_log = (root / WATCH_LOG_NAME).open("a")
+            subprocess.Popen([sys.executable, str(Path(__file__).resolve()),
+                              "--watch", "--destination", str(root)],
+                             stdout=watch_log, stderr=subprocess.STDOUT,
+                             stdin=subprocess.DEVNULL, start_new_session=True)
+            print(f"Watching for mid-session anti-cheat updates for {WATCH_SECONDS // 60} minutes.")
     except (OSError, ValueError, KeyError, TypeError):
         print("ARC Raiders could not start. Check or reinstall this compatibility copy.",
               file=sys.stderr)
