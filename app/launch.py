@@ -72,20 +72,26 @@ def launch_environment(root, engine, bottle):
     # This is a standalone launch, not a child of an already initialized bottle.
     env = {k: v for k, v in os.environ.items()
            if not k.startswith("DYLD_") and k not in remove}
-    # Inject overrides from app/bottle-env.json when present.
+    # Inject user overrides from app/bottle-env.conf when present.
+    # Format: one "KEY = value" per line. Lines starting with # are comments,
+    # so an option is toggled by adding or removing a single #.
     injector = OVERRIDES_FILE
     if injector.is_file():
         try:
-            overrides = json.loads(injector.read_text(encoding="utf-8")).get("environment", {})
-            if not isinstance(overrides, dict):
-                raise ValueError("environment must be an object")
-            for key, value in overrides.items():
-                if not isinstance(key, str) or not key.isupper() or not isinstance(value, str):
-                    raise ValueError(f"invalid environment entry: {key!r}")
+            overrides = {}
+            for raw in injector.read_text(encoding="utf-8").splitlines():
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key, value = key.strip(), value.strip()
+                if not key or not key.isupper():
+                    raise ValueError(f"invalid line: {line!r}")
+                overrides[key] = value
             env.update(overrides)
             if overrides:
                 print(f"Bottle environment overrides: {', '.join(sorted(overrides))}")
-        except (OSError, ValueError, json.JSONDecodeError) as exc:
+        except (OSError, ValueError) as exc:
             print(f"Overrides from {injector.name} ignored: {exc}", file=sys.stderr)
     env.update(WINEPREFIX=str(bottle), CX_BOTTLE_PATH=str(root / "bottles"),
                CX_ROOT=str(engine), PWD=str(root), WINEMSYNC="0",
