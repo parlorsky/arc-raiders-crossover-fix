@@ -16,6 +16,8 @@ except ImportError:  # Older installations may not ship the module yet.
     apply_compatibility_tweak = describe = None
 
 DEFAULT_DESTINATION = Path.home() / "Library/Application Support/ARCRaidersCrossOver"
+# User-editable environment overrides, applied on top of the defaults.
+OVERRIDES_FILE = Path(__file__).resolve().parent / "bottle-env.json"
 PROJECT = "arc-raiders-crossover-compat"
 PE_SHA256 = "97110d7731ca6f6aa5e6cc7bd9c538682877cc390cdfb489bf0057e4fd64f6ed"
 BASELINE_PE_SHA256 = "6dff64c00793ce92124f1316985c63783f539f26b392975c70f57637458d2387"
@@ -70,6 +72,21 @@ def launch_environment(root, engine, bottle):
     # This is a standalone launch, not a child of an already initialized bottle.
     env = {k: v for k, v in os.environ.items()
            if not k.startswith("DYLD_") and k not in remove}
+    # Inject overrides from app/bottle-env.json when present.
+    injector = OVERRIDES_FILE
+    if injector.is_file():
+        try:
+            overrides = json.loads(injector.read_text(encoding="utf-8")).get("environment", {})
+            if not isinstance(overrides, dict):
+                raise ValueError("environment must be an object")
+            for key, value in overrides.items():
+                if not isinstance(key, str) or not key.isupper() or not isinstance(value, str):
+                    raise ValueError(f"invalid environment entry: {key!r}")
+            env.update(overrides)
+            if overrides:
+                print(f"Bottle environment overrides: {', '.join(sorted(overrides))}")
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"Overrides from {injector.name} ignored: {exc}", file=sys.stderr)
     env.update(WINEPREFIX=str(bottle), CX_BOTTLE_PATH=str(root / "bottles"),
                CX_ROOT=str(engine), PWD=str(root), WINEMSYNC="0",
                CX_GRAPHICS_BACKEND="d3dmetal", CX_LOG="/dev/null",

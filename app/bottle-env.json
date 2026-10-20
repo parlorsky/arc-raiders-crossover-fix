@@ -1,0 +1,27 @@
+{
+  "_README": "Ribbon config for the bottle. Copy the desired block into \"environment\". Comments use // at the start of a key. Only the \"environment\" object is read.",
+  "environment": {
+    "WINEMSYNC": "0",
+    "CX_GRAPHICS_BACKEND": "d3dmetal",
+    "D3DM_ENABLE_METALFX": "0",
+    "DXMT_ENABLE_NVEXT": "0"
+  },
+  "presets/d3dmetal-default": {
+    "WINEMSYNC": "0",
+    "CX_GRAPHICS_BACKEND": "d3dmetal",
+    "D3DM_ENABLE_METALFX": "0",
+    "DXMT_ENABLE_NVEXT": "0"
+  },
+  "presets/dxmt-experimental": {
+    "WINEMSYNC": "0",
+    "CX_GRAPHICS_BACKEND": "dxmt",
+    "D3DM_ENABLE_METALFX": "0",
+    "DXMT_ENABLE_NVEXT": "1"
+  },
+  "presets/msync-on": {
+    "WINEMSYNC": "1",
+    "CX_GRAPHICS_BACKEND": "d3dmetal",
+    "D3DM_ENABLE_METALFX": "0",
+    "DXMT_ENABLE_NVEXT": "0"
+  }
+}
