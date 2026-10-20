@@ -1,11 +1,43 @@
 {
-  "_README": "Ribbon config for the bottle. Copy the desired block into \"environment\". Comments use // at the start of a key. Only the \"environment\" object is read.",
+  "_README": [
+    "Presets are ready-made blocks. Copy the desired block into \"environment\".",
+    "You can uncomment multiple keys at once and edit their values.",
+    "JSON does not support comments. A key starting with \"//\" is ignored.",
+    "After editing, save the file and run Launch ARC Raiders.command.",
+    "All values are strings."
+  ],
+  "// HOW TO USE": [
+    "1. Copy the desired preset block from \"presets\" into \"environment\".",
+    "2. Or edit the values inside \"environment\" directly.",
+    "3. Save the file and start the game.",
+    "4. If something breaks, return \"presets/d3dmetal-default\".",
+    "Every key below is a string (use quotes around 0 and 1)."
+  ],
   "environment": {
     "WINEMSYNC": "0",
     "CX_GRAPHICS_BACKEND": "d3dmetal",
     "D3DM_ENABLE_METALFX": "0",
     "DXMT_ENABLE_NVEXT": "0"
   },
+  "// WINEMSYNC": [
+    "0 = classic thread synchronization (most stable)",
+    "1 = MSync, native macOS primitives, can give higher FPS in games",
+    "but can sometimes be unstable on Apple silicon"
+  ],
+  "// CX_GRAPHICS_BACKEND": [
+    "d3dmetal - translation via D3DMetal (recommended, the most tested)",
+    "dxmt     - alternative DXMT backend (may be faster, less predictable)",
+    "wine     - classic translation without D3DMetal/DXMT (very slow, rarely needed)"
+  ],
+  "// D3DM_ENABLE_METALFX": [
+    "0 = MetalFX upscaling disabled",
+    "1 = enabled, can improve picture quality and performance,",
+    "    but requires that the game supports this path"
+  ],
+  "// DXMT_ENABLE_NVEXT": [
+    "0 = NV extensions for DXMT disabled",
+    "1 = enabled, makes sense only if CX_GRAPHICS_BACKEND = \"dxmt\""
+  ],
   "presets/d3dmetal-default": {
     "WINEMSYNC": "0",
     "CX_GRAPHICS_BACKEND": "d3dmetal",
