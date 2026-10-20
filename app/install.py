@@ -357,7 +357,7 @@ def install_private(inputs: dict, *, baseline: bool = False) -> Path:
     return destination
 
 
-def update_existing(destination: Path) -> Path:
+def update_existing(destination: Path, *, expected_mode: str = "patched") -> Path:
     """Refresh helper scripts and the local tweak in an existing private copy."""
     root = destination.expanduser().resolve(strict=True)
     if not root.is_dir() or root.stat().st_uid != os.getuid():
@@ -367,6 +367,9 @@ def update_existing(destination: Path) -> Path:
                     bottle="bottles/Steam", bottle_name="Steam")
     if not isinstance(marker, dict) or any(marker.get(k) != v for k, v in expected.items()):
         raise ValueError("The existing folder is not an ARC Raiders compatibility installation")
+    if marker.get("mode") != expected_mode:
+        raise ValueError(f"The existing copy is a {marker.get('mode')} installation; "
+                         f"this command expects a {expected_mode} one")
     launcher = root / "launcher"
     if launcher.is_symlink() or not launcher.is_dir():
         raise ValueError("The existing installation has no launcher folder")
@@ -378,10 +381,11 @@ def update_existing(destination: Path) -> Path:
     for filename in ("install.py", "launch.py", "uninstall.py", "compat.py"):
         shutil.copy2(HERE / filename, launcher / filename)
     (launcher / "anticheat.py").unlink(missing_ok=True)
-    from compat import apply_compatibility_tweak, describe
-    tweak = apply_compatibility_tweak(root / "bottles/Steam")
-    if tweak:
-        print("Compatibility adjustment: " + describe(tweak))
+    if marker.get("mode") != "baseline":
+        from compat import apply_compatibility_tweak, describe
+        tweak = apply_compatibility_tweak(root / "bottles/Steam")
+        if tweak:
+            print("Compatibility adjustment: " + describe(tweak))
     return root
 
 
@@ -395,6 +399,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--reveal", action="store_true", help="Show the installed launch shortcut in Finder after installation")
     parser.add_argument("--ensure", action="store_true",
                         help="Install fresh, or refresh an existing private copy")
+    parser.add_argument("--mode", choices=("patched", "baseline"), default="patched",
+                        help="patched: the compatibility copy; baseline: the unmodified demo copy")
     args = parser.parse_args(argv)
     try:
         if args.list_bottles:
@@ -405,8 +411,9 @@ def main(argv: list[str] | None = None) -> int:
                 print("No Steam bottles found in the normal CrossOver locations.")
             return 0
         if args.ensure and args.destination.expanduser().exists():
-            installed = update_existing(args.destination)
-            shortcut = installed / "Launch ARC Raiders.command"
+            installed = update_existing(args.destination, expected_mode=args.mode)
+            shortcut = installed / ("Launch BEFORE demo.command" if args.mode == "baseline"
+                                    else "Launch ARC Raiders.command")
             print(f"Updated private copy: {installed}")
             print(f"Double-click: {shortcut}")
             if args.reveal:
@@ -420,7 +427,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.dry_run:
             print("Dry run passed. No files changed.")
             return 0
-        installed = install_private(inputs)
+        installed = install_private(inputs, baseline=args.mode == "baseline")
         print(f"Installed private copy: {installed}")
         shortcut = installed / "Launch ARC Raiders.command"
         print(f"Double-click: {shortcut}")

@@ -11,9 +11,10 @@ This is a compatibility project for running your own game on macOS. It does **no
 ## Repository layout
 
 ```
-ARC Raiders.command   one-button entry point (install / update / launch)
-app/                  installer, launcher, uninstaller, compatibility module
-patches/              binary patch recipes
+ARC Raiders.command                 one-button entry point (install / update / launch)
+Demo (before the fix).command       optional baseline demo copy
+app/                                installer, launcher, uninstaller, compatibility module
+patches/                            binary patch recipes
 ```
 
 [Download ZIP](https://github.com/parlorsky/arc-raiders-crossover-fix/archive/refs/heads/main.zip)
@@ -27,6 +28,8 @@ patches/              binary patch recipes
 3. If Steam asks you to sign in, do it in the game window. The first launch can take several minutes.
 
 That is the whole flow — no Terminal commands and no manually typed paths.
+
+**Baseline demo (before the fix):** double-click **Demo (before the fix).command** to create a separate unmodified copy and show how the game behaves without the fix. It shares nothing with the patched copy, so you can keep both side by side. Use **ARC Raiders.command** for normal play.
 
 **If macOS blocks the downloaded script:** this community script is not notarized. Review the source before deciding to run it. Where macOS offers it, use the per-download **System Settings → Privacy & Security → Open Anyway** flow described by [Apple](https://support.apple.com/en-us/102445). Do not disable Gatekeeper or other global protections. If macOS reports malware or damaged software, stop and investigate.
 
