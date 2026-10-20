@@ -16,8 +16,8 @@ except ImportError:  # Older installations may not ship the module yet.
     apply_compatibility_tweak = describe = None
 
 DEFAULT_DESTINATION = Path.home() / "Library/Application Support/ARCRaidersCrossOver"
-# User-editable environment overrides, applied on top of the defaults.
-OVERRIDES_FILE = Path(__file__).resolve().parent / "bottle-env.json"
+# User-editable overrides, kept at the repository root for easy editing.
+OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "bottle-env.conf"
 PROJECT = "arc-raiders-crossover-compat"
 PE_SHA256 = "97110d7731ca6f6aa5e6cc7bd9c538682877cc390cdfb489bf0057e4fd64f6ed"
 BASELINE_PE_SHA256 = "6dff64c00793ce92124f1316985c63783f539f26b392975c70f57637458d2387"
@@ -81,12 +81,17 @@ def launch_environment(root, engine, bottle):
             overrides = {}
             for raw in injector.read_text(encoding="utf-8").splitlines():
                 line = raw.strip()
-                if not line or line.startswith("#") or "=" not in line:
+                if not line or line.startswith("#"):
                     continue
+                line = line.split("#", 1)[0].strip()  # inline comment after a value is allowed
+                if not line:
+                    continue
+                if "=" not in line:
+                    raise ValueError(f"invalid line: {raw!r}")
                 key, value = line.split("=", 1)
                 key, value = key.strip(), value.strip()
                 if not key or not key.isupper():
-                    raise ValueError(f"invalid line: {line!r}")
+                    raise ValueError(f"invalid line: {raw!r}")
                 overrides[key] = value
             env.update(overrides)
             if overrides:
