@@ -269,6 +269,22 @@ def configure_private_bottle(bottle: Path) -> None:
             if link.is_symlink():
                 link.unlink()
                 link.mkdir()
+    # Make the private copy visible in the CrossOver GUI through a stable
+    # relative symlink.  The launcher never dereferences it, but users who
+    # want to fine-tune the bottle with CrossOver's own panels can.
+    bottles_root = Path.home() / "Library/Application Support/CrossOver/Bottles"
+    if bottles_root.is_dir():
+        link = bottles_root / "ARC Raiders (private)"
+        target = Path(os.path.relpath(bottle, bottles_root))
+        try:
+            if link.is_symlink() and link.resolve() == bottle.resolve():
+                pass  # already in place
+            elif link.exists() or link.is_symlink():
+                pass  # never touch a name we did not create
+            else:
+                link.symlink_to(target)
+        except OSError:
+            pass  # best-effort visibility only
 
 
 def sign_private(path: Path) -> None:
